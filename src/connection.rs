@@ -17,7 +17,7 @@ pub struct Connection {
 }
 
 impl Connection {
-    fn init(dbus_manager: &Rc<DBusNetworkManager>, path: &str) -> Result<Self> {
+    pub fn init(dbus_manager: &Rc<DBusNetworkManager>, path: &str) -> Result<Self> {
         let settings = dbus_manager.get_connection_settings(path)?;
 
         Ok(Connection {
@@ -122,6 +122,22 @@ impl Connection {
                 }
             },
         }
+    }
+
+    pub fn set_dhcp<S>(
+        &self,
+        device_path: &str,
+    ) -> Result<ConnectionState>
+    {
+        let (path, _) = self.dbus_manager.create_dhcp_config(device_path)?;
+
+        let state = wait(
+            &self,
+            &ConnectionState::Activated,
+            self.dbus_manager.method_timeout(),
+        )?;
+
+        Ok(state)
     }
 
     pub fn get_devices(&self) -> Result<Vec<Device>> {
@@ -284,6 +300,8 @@ where
     Ok((connection, state))
 }
 
+
+
 fn get_connection_active_path(
     dbus_manager: &DBusNetworkManager,
     connection_path: &str,
@@ -301,7 +319,7 @@ fn get_connection_active_path(
     Ok(None)
 }
 
-fn wait(
+pub fn wait(
     connection: &Connection,
     target_state: &ConnectionState,
     timeout: u64,

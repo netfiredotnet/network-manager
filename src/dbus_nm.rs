@@ -347,6 +347,44 @@ impl DBusNetworkManager {
         ))
     }
 
+    pub fn create_dhcp_config(
+        &self,
+        device_path: &str,
+    ) -> Result<(String, String)>
+    {
+
+        // See https://developer-old.gnome.org/NetworkManager/unstable/nm-settings-dbus.html
+        let mut connection: VariantMap = HashMap::new();
+        add_val(&mut connection, "autoconnect", true);
+        add_str(&mut connection, "type", "802-3-ethernet");
+
+        let mut ipv4: VariantMap = HashMap::new();
+        add_str(&mut ipv4, "method", "auto");
+
+        let mut settings: HashMap<String, VariantMap> = HashMap::new();
+
+        settings.insert("connection".to_string(), connection);
+        settings.insert("ipv4".to_string(), ipv4);
+
+        let response = self.dbus.call_with_args(
+            NM_SERVICE_PATH,
+            NM_SERVICE_INTERFACE,
+            "AddAndActivateConnection",
+            &[
+                &settings as &RefArg,
+                &Path::new(device_path)? as &RefArg,
+                &Path::new("/")? as &RefArg,
+            ],
+        )?;
+
+        let (conn_path, active_connection): (Path, Path) = self.dbus.extract_two(&response)?;
+
+        Ok((
+            path_to_string(&conn_path)?,
+            path_to_string(&active_connection)?,
+        ))
+    }
+
     pub fn get_devices(&self) -> Result<Vec<String>> {
         self.dbus
             .property(NM_SERVICE_PATH, NM_SERVICE_INTERFACE, "Devices")

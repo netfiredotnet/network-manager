@@ -26,9 +26,11 @@ mod connection;
 mod device;
 mod wifi;
 mod ssid;
+mod ethernet;
 
 pub use manager::{Connectivity, NetworkManager};
 pub use connection::{Connection, ConnectionSettings, ConnectionState};
 pub use device::{Device, DeviceState, DeviceType};
 pub use wifi::{AccessPoint, AccessPointCredentials, Security};
+pub use ethernet::EthernetDevice;
 pub use service::ServiceState;
