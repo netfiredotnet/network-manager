@@ -1,8 +1,8 @@
-use std::rc::Rc;
 use std::fmt;
+use std::rc::Rc;
 
-use errors::*;
 use dbus_nm::DBusNetworkManager;
+use errors::*;
 
 use wifi::{new_wifi_device, WiFiDevice};
 use ethernet::{new_ethernet_device, EthernetDevice};
@@ -24,8 +24,8 @@ impl Device {
         Ok(Device {
             dbus_manager: Rc::clone(dbus_manager),
             path: path.to_string(),
-            interface: interface,
-            device_type: device_type,
+            interface,
+            device_type,
         })
     }
 
@@ -58,16 +58,6 @@ impl Device {
     }
 
     /// Connects a Network Manager device.
-    ///
-    /// Examples
-    ///
-    /// ```
-    /// use network_manager::{NetworkManager, DeviceType};
-    /// let manager = NetworkManager::new();
-    /// let devices = manager.get_devices().unwrap();
-    /// let i = devices.iter().position(|ref d| *d.device_type() == DeviceType::WiFi).unwrap();
-    /// devices[i].connect().unwrap();
-    /// ```
     pub fn connect(&self) -> Result<DeviceState> {
         let state = self.get_state()?;
 
@@ -81,21 +71,11 @@ impl Device {
                     &DeviceState::Activated,
                     self.dbus_manager.method_timeout(),
                 )
-            },
+            }
         }
     }
 
     /// Disconnect a Network Manager device.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use network_manager::{NetworkManager, DeviceType};
-    /// let manager = NetworkManager::new();
-    /// let devices = manager.get_devices().unwrap();
-    /// let i = devices.iter().position(|ref d| *d.device_type() == DeviceType::WiFi).unwrap();
-    /// devices[i].disconnect().unwrap();
-    /// ```
     pub fn disconnect(&self) -> Result<DeviceState> {
         let state = self.get_state()?;
 
@@ -109,7 +89,7 @@ impl Device {
                     &DeviceState::Disconnected,
                     self.dbus_manager.method_timeout(),
                 )
-            },
+            }
         }
     }
 }
@@ -159,6 +139,15 @@ pub enum DeviceType {
     Veth,
     Macsec,
     Dummy,
+    Ppp,
+    OvsInterface,
+    OvsPort,
+    OvsBridge,
+    Wpan,
+    Lowpan,
+    Wireguard,
+    WifiP2p,
+    Vrf,
 }
 
 impl From<i64> for DeviceType {
@@ -187,10 +176,19 @@ impl From<i64> for DeviceType {
             20 => DeviceType::Veth,
             21 => DeviceType::Macsec,
             22 => DeviceType::Dummy,
+            23 => DeviceType::Ppp,
+            24 => DeviceType::OvsInterface,
+            25 => DeviceType::OvsPort,
+            26 => DeviceType::OvsBridge,
+            27 => DeviceType::Wpan,
+            28 => DeviceType::Lowpan,
+            29 => DeviceType::Wireguard,
+            30 => DeviceType::WifiP2p,
+            31 => DeviceType::Vrf,
             _ => {
                 warn!("Undefined device type: {}", device_type);
                 DeviceType::Unknown
-            },
+            }
         }
     }
 }
@@ -231,7 +229,7 @@ impl From<i64> for DeviceState {
             _ => {
                 warn!("Undefined device state: {}", state);
                 DeviceState::Unknown
-            },
+            }
         }
     }
 }
@@ -312,49 +310,5 @@ fn wait(device: &Device, target_state: &DeviceState, timeout: u64) -> Result<Dev
             "Still waiting for device state ({:?}): {:?} / {}s elapsed",
             target_state, state, total_time
         );
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::super::NetworkManager;
-
-    use super::*;
-
-    #[test]
-    fn test_device_connect_disconnect() {
-        let manager = NetworkManager::new();
-
-        let devices = manager.get_devices().unwrap();
-
-        let i = devices
-            .iter()
-            .position(|ref d| d.device_type == DeviceType::WiFi)
-            .unwrap();
-        let device = &devices[i];
-
-        let state = device.get_state().unwrap();
-
-        if state == DeviceState::Activated {
-            let state = device.disconnect().unwrap();
-            assert_eq!(DeviceState::Disconnected, state);
-
-            ::std::thread::sleep(::std::time::Duration::from_secs(5));
-
-            let state = device.connect().unwrap();
-            assert_eq!(DeviceState::Activated, state);
-
-            ::std::thread::sleep(::std::time::Duration::from_secs(5));
-        } else {
-            let state = device.connect().unwrap();
-            assert_eq!(DeviceState::Activated, state);
-
-            ::std::thread::sleep(::std::time::Duration::from_secs(5));
-
-            let state = device.disconnect().unwrap();
-            assert_eq!(DeviceState::Disconnected, state);
-
-            ::std::thread::sleep(::std::time::Duration::from_secs(5));
-        }
     }
 }

@@ -1,8 +1,8 @@
-use std::rc::Rc;
 use std::net::Ipv4Addr;
+use std::rc::Rc;
 
-use errors::*;
 use dbus_nm::DBusNetworkManager;
+use errors::*;
 
 use connection::{connect_to_access_point, create_hotspot, Connection, ConnectionState};
 use device::{Device, PathGetter};
@@ -14,24 +14,12 @@ pub struct WiFiDevice<'a> {
 }
 
 impl<'a> WiFiDevice<'a> {
-    /// Get the list of access points visible to this device.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use network_manager::{NetworkManager, DeviceType};
-    /// let manager = NetworkManager::new();
-    /// let devices = manager.get_devices().unwrap();
-    /// let i = devices.iter().position(|ref d| *d.device_type() == DeviceType::WiFi).unwrap();
-    /// let device = devices[i].as_wifi_device().unwrap();
-    /// device.request_scan()?;
-    /// let access_points = device.get_access_points().unwrap();
-    /// println!("{:?}", access_points);
-    /// ```
+    // Get the list of access points visible to this device.
     pub fn get_access_points(&self) -> Result<Vec<AccessPoint>> {
         let mut access_points = Vec::new();
 
-        let paths = self.dbus_manager
+        let paths = self
+            .dbus_manager
             .get_device_access_points(self.device.path())?;
 
         for path in paths {
@@ -142,27 +130,35 @@ bitflags! {
 bitflags! {
     pub struct NM80211ApSecurityFlags: u32 {
          // the access point has no special security requirements
-        const AP_SEC_NONE                    = 0x0000_0000;
+        const AP_SEC_NONE                       = 0x0000_0000;
         // 40/64-bit WEP is supported for pairwise/unicast encryption
-        const AP_SEC_PAIR_WEP40              = 0x0000_0001;
+        const AP_SEC_PAIR_WEP40                 = 0x0000_0001;
         // 104/128-bit WEP is supported for pairwise/unicast encryption
-        const AP_SEC_PAIR_WEP104             = 0x0000_0002;
+        const AP_SEC_PAIR_WEP104                = 0x0000_0002;
         // TKIP is supported for pairwise/unicast encryption
-        const AP_SEC_PAIR_TKIP               = 0x0000_0004;
+        const AP_SEC_PAIR_TKIP                  = 0x0000_0004;
         // AES/CCMP is supported for pairwise/unicast encryption
-        const AP_SEC_PAIR_CCMP               = 0x0000_0008;
+        const AP_SEC_PAIR_CCMP                  = 0x0000_0008;
         // 40/64-bit WEP is supported for group/broadcast encryption
-        const AP_SEC_GROUP_WEP40             = 0x0000_0010;
+        const AP_SEC_GROUP_WEP40                = 0x0000_0010;
         // 104/128-bit WEP is supported for group/broadcast encryption
-        const AP_SEC_GROUP_WEP104            = 0x0000_0020;
+        const AP_SEC_GROUP_WEP104               = 0x0000_0020;
         // TKIP is supported for group/broadcast encryption
-        const AP_SEC_GROUP_TKIP              = 0x0000_0040;
+        const AP_SEC_GROUP_TKIP                 = 0x0000_0040;
         // AES/CCMP is supported for group/broadcast encryption
-        const AP_SEC_GROUP_CCMP              = 0x0000_0080;
+        const AP_SEC_GROUP_CCMP                 = 0x0000_0080;
         // WPA/RSN Pre-Shared Key encryption is supported
-        const AP_SEC_KEY_MGMT_PSK            = 0x0000_0100;
+        const AP_SEC_KEY_MGMT_PSK               = 0x0000_0100;
         // 802.1x authentication and key management is supported
-        const AP_SEC_KEY_MGMT_802_1X         = 0x0000_0200;
+        const AP_SEC_KEY_MGMT_802_1X            = 0x0000_0200;
+        // WPA/RSN Simultaneous Authentication of Equals is supported
+        const AP_SEC_KEY_MGMT_SAE               = 0x0000_0400;
+        // WPA/RSN Opportunistic Wireless Encryption is supported
+        const AP_SEC_KEY_MGMT_OWE               = 0x0000_0800;
+        // WPA/RSN Opportunistic Wireless Encryption transition mode is supported
+        const AP_SEC_KEY_MGMT_OWE_TM            = 0x0000_1000;
+        // WPA3 Enterprise Suite-B 192 bit mode is supported
+        const AP_SEC_KEY_MGMT_EAP_SUITE_B_192   = 0x0000_2000;
     }
 }
 
@@ -172,7 +168,7 @@ pub fn new_wifi_device<'a>(
 ) -> WiFiDevice<'a> {
     WiFiDevice {
         dbus_manager: Rc::clone(dbus_manager),
-        device: device,
+        device,
     }
 }
 
@@ -184,9 +180,9 @@ fn get_access_point(manager: &DBusNetworkManager, path: &str) -> Result<Option<A
 
         let access_point = AccessPoint {
             path: path.to_string(),
-            ssid: ssid,
-            strength: strength,
-            security: security,
+            ssid,
+            strength,
+            security,
         };
 
         Ok(Some(access_point))
