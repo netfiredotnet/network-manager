@@ -377,10 +377,7 @@ impl DBusNetworkManager {
 
         let (conn_path, active_connection): (Path, Path) = self.dbus.extract_two(&response)?;
 
-        Ok((
-            path_to_string(&conn_path)?,
-            path_to_string(&active_connection)?,
-        ))
+        Ok((conn_path.to_string(), active_connection.to_string()))
     }
 
     pub fn get_devices(&self) -> Result<Vec<String>> {
