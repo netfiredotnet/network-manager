@@ -12,6 +12,28 @@
 
 ---
 
+## Fork Features
+
+This fork adds the ability to reset wired ethernet connections to DHCP addressing.
+
+### Reset Ethernet to DHCP
+
+```rust
+use network_manager::NetworkManager;
+
+let manager = NetworkManager::new();
+
+for device in manager.get_devices().unwrap() {
+    if let Some(ethernet) = device.as_ethernet_device() {
+        // Reset the ethernet connection to use DHCP
+        let (connection, state) = ethernet.set_dhcp().unwrap();
+        println!("Connection activated: {:?}", state);
+    }
+}
+```
+
+---
+
 ## Support
 
 If you're having any problem, please [raise an issue](https://github.com/balena-io-modules/network-manager/issues/new) on GitHub or [contact us](https://balena.io/community/), and the balena.io team will be happy to help.
